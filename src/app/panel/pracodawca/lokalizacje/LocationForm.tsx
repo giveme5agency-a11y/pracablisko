@@ -12,7 +12,7 @@ interface LocationFormProps {
   initialData?: {
     id: string
     name: string
-    address: string
+    street: string
     city: string
     postalCode: string
     latitude: number | null
@@ -27,7 +27,7 @@ export function LocationForm({ initialData }: LocationFormProps) {
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    address: initialData?.address || "",
+    street: initialData?.street || "",
     city: initialData?.city || "",
     postalCode: initialData?.postalCode || "",
     latitude: initialData?.latitude?.toString() || "",
@@ -38,7 +38,7 @@ export function LocationForm({ initialData }: LocationFormProps) {
     e.preventDefault()
     setError("")
 
-    if (!formData.name || !formData.address || !formData.city || !formData.postalCode) {
+    if (!formData.name || !formData.street || !formData.city || !formData.postalCode) {
       setError("Wypełnij wszystkie wymagane pola")
       return
     }
@@ -103,12 +103,12 @@ export function LocationForm({ initialData }: LocationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Adres *</Label>
+            <Label htmlFor="street">Adres *</Label>
             <Input
-              id="address"
-              value={formData.address}
+              id="street"
+              value={formData.street}
               onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
+                setFormData({ ...formData, street: e.target.value })
               }
               placeholder="np. ul. Marszałkowska 1"
               disabled={isLoading}

@@ -16,11 +16,11 @@ interface JobCardProps {
     id: string
     title: string
     description: string
-    jobType: JobType
-    workSchedule: WorkSchedule
+    jobType: string
+    workSchedule: string
     salaryMin: number | null
     salaryMax: number | null
-    salaryType: SalaryType | null
+    salaryType: string | null
     distance?: number | null
     employer: {
       companyName: string
@@ -114,7 +114,7 @@ export function JobCard({ job, isSelected, onSelect }: JobCardProps) {
   const formatSalary = () => {
     if (!job.salaryMin && !job.salaryMax) return null
 
-    const type = job.salaryType ? SALARY_TYPE_LABELS[job.salaryType] : ""
+    const type = job.salaryType ? SALARY_TYPE_LABELS[job.salaryType as SalaryType] : ""
 
     if (job.salaryMin && job.salaryMax) {
       return `${job.salaryMin} - ${job.salaryMax} zł ${type}`
@@ -178,10 +178,10 @@ export function JobCard({ job, isSelected, onSelect }: JobCardProps) {
             <div className="flex flex-wrap gap-1 sm:gap-2">
               <Badge variant="outline" className="text-xs">
                 <Clock className="h-3 w-3 mr-1" />
-                {JOB_TYPE_LABELS[job.jobType]}
+                {JOB_TYPE_LABELS[job.jobType as JobType]}
               </Badge>
               <Badge variant="outline" className="text-xs hidden sm:inline-flex">
-                {WORK_SCHEDULE_LABELS[job.workSchedule]}
+                {WORK_SCHEDULE_LABELS[job.workSchedule as WorkSchedule]}
               </Badge>
               {job.category && (
                 <Badge variant="secondary" className="text-xs">{job.category.name}</Badge>

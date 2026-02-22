@@ -5,11 +5,11 @@ import { z } from "zod"
 
 const locationSchema = z.object({
   name: z.string().min(2).max(100),
-  address: z.string().min(3).max(200),
+  street: z.string().min(3).max(200),
   city: z.string().min(2).max(100),
   postalCode: z.string().min(5).max(10),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
+  latitude: z.number(),
+  longitude: z.number(),
 })
 
 export async function POST(request: Request) {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     if (!validated.success) {
       return NextResponse.json(
-        { error: validated.error.errors[0].message },
+        { error: validated.error.issues[0].message },
         { status: 400 }
       )
     }
@@ -44,11 +44,11 @@ export async function POST(request: Request) {
       data: {
         employerId: employer.id,
         name: data.name,
-        address: data.address,
+        street: data.street,
         city: data.city,
         postalCode: data.postalCode,
-        latitude: data.latitude || null,
-        longitude: data.longitude || null,
+        latitude: data.latitude,
+        longitude: data.longitude,
       },
     })
 

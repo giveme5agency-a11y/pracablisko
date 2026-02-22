@@ -66,8 +66,8 @@ export default async function EditJobPage({ params }: Props) {
           jobType: job.jobType,
           workSchedule: job.workSchedule,
           experienceLevel: job.experienceLevel,
-          salaryMin: job.salaryMin,
-          salaryMax: job.salaryMax,
+          salaryMin: job.salaryMin ? Number(job.salaryMin) : null,
+          salaryMax: job.salaryMax ? Number(job.salaryMax) : null,
           salaryType: job.salaryType,
           status: job.status,
           skills: job.skills.map((s) => ({

@@ -87,7 +87,7 @@ export default async function LocationsPage({
               <CardContent>
                 <div className="flex items-center text-sm text-muted-foreground mb-2">
                   <MapPin className="h-4 w-4 mr-1" />
-                  {location.address}
+                  {location.street}
                 </div>
                 <div className="text-sm text-muted-foreground mb-3">
                   {location.postalCode} {location.city}

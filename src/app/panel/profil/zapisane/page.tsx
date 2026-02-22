@@ -97,8 +97,8 @@ export default async function SavedJobsPage() {
                       {saved.job.salaryMin && (
                         <div className="flex items-center gap-1">
                           <Banknote className="h-4 w-4" />
-                          {saved.job.salaryMin}
-                          {saved.job.salaryMax && ` - ${saved.job.salaryMax}`} zł
+                          {String(saved.job.salaryMin)}
+                          {saved.job.salaryMax && ` - ${String(saved.job.salaryMax)}`} zł
                         </div>
                       )}
                       <div className="flex items-center gap-1">
