@@ -1,0 +1,378 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+// Modele użytkowników
+// =====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  role          UserRole  @default(JOB_SEEKER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employer  Employer?
+  jobSeeker JobSeeker?
+  accounts  Account[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum UserRole {
+  JOB_SEEKER
+  EMPLOYER
+  ADMIN
+}
+
+// =====================
+// Profil pracodawcy
+// =====================
+
+model Employer {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  companyName String
+  nip         String?  @unique
+  description String?  @db.Text
+  logo        String?
+  website     String?
+  phone       String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locations Location[]
+  jobs      Job[]
+
+  @@map("employers")
+}
+
+// =====================
+// Profil szukającego pracy
+// =====================
+
+model JobSeeker {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  firstName       String?
+  lastName        String?
+  phone           String?
+  dateOfBirth     DateTime?
+  bio             String?  @db.Text
+  avatar          String?
+  cvUrl           String?
+  preferredRadius Int      @default(5) // km
+  latitude        Float?
+  longitude       Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+  skills       JobSeekerSkill[]
+  savedJobs    SavedJob[]
+  alerts       JobAlert[]
+
+  @@map("job_seekers")
+}
+
+model JobSeekerSkill {
+  id          String   @id @default(cuid())
+  jobSeekerId String
+  skillId     String
+
+  jobSeeker JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSeekerId, skillId])
+  @@map("job_seeker_skills")
+}
+
+// =====================
+// Lokalizacje
+// =====================
+
+model Location {
+  id         String   @id @default(cuid())
+  employerId String
+  name       String
+  street     String
+  city       String
+  postalCode String
+  latitude   Float
+  longitude  Float
+  isMain     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employer Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  jobs     Job[]
+
+  @@map("locations")
+}
+
+// =====================
+// Ogłoszenia o pracę
+// =====================
+
+model Job {
+  id               String        @id @default(cuid())
+  employerId       String
+  locationId       String
+  title            String
+  description      String        @db.Text
+  requirements     String?       @db.Text
+  responsibilities String?       @db.Text
+  benefits         String?       @db.Text
+  jobType          JobType
+  workSchedule     WorkSchedule
+  salaryMin        Decimal?      @db.Decimal(10, 2)
+  salaryMax        Decimal?      @db.Decimal(10, 2)
+  salaryType       SalaryType?
+  experienceLevel  ExperienceLevel @default(NO_EXPERIENCE)
+  status           JobStatus     @default(DRAFT)
+  expiresAt        DateTime?
+  views            Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  employer           Employer      @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  location           Location      @relation(fields: [locationId], references: [id])
+  applications       Application[]
+  skills             JobSkill[]
+  savedBy            SavedJob[]
+  category           Category?     @relation(fields: [categoryId], references: [id])
+  categoryId         String?
+  alertNotifications AlertNotification[]
+
+  @@index([status, expiresAt])
+  @@index([locationId])
+  @@index([employerId])
+  @@map("jobs")
+}
+
+model JobSkill {
+  id       String  @id @default(cuid())
+  jobId    String
+  skillId  String
+  required Boolean @default(false)
+
+  job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, skillId])
+  @@map("job_skills")
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+}
+
+enum WorkSchedule {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+  FLEXIBLE
+  SHIFTS
+}
+
+enum SalaryType {
+  HOURLY
+  MONTHLY
+  YEARLY
+}
+
+enum ExperienceLevel {
+  NO_EXPERIENCE
+  JUNIOR
+  MID
+  SENIOR
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  CLOSED
+}
+
+// =====================
+// Aplikacje
+// =====================
+
+model Application {
+  id          String            @id @default(cuid())
+  jobId       String
+  jobSeekerId String
+  coverLetter String?           @db.Text
+  cvUrl       String?
+  status      ApplicationStatus @default(PENDING)
+  notes       String?           @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobSeeker JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, jobSeekerId])
+  @@index([status])
+  @@map("applications")
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+// =====================
+// Umiejętności
+// =====================
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  jobSeekers JobSeekerSkill[]
+  jobs       JobSkill[]
+
+  @@map("skills")
+}
+
+// =====================
+// Kategorie
+// =====================
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+
+  jobs   Job[]
+  alerts JobAlert[]
+
+  @@map("categories")
+}
+
+// =====================
+// Zapisane ogłoszenia
+// =====================
+
+model SavedJob {
+  id          String   @id @default(cuid())
+  jobSeekerId String
+  jobId       String
+  createdAt   DateTime @default(now())
+
+  jobSeeker JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSeekerId, jobId])
+  @@map("saved_jobs")
+}
+
+// =====================
+// Alerty o ofertach
+// =====================
+
+model JobAlert {
+  id          String    @id @default(cuid())
+  jobSeekerId String
+  name        String
+  latitude    Float
+  longitude   Float
+  radius      Int       @default(5) // km
+  categoryId  String?
+  jobType     JobType?
+  keywords    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  jobSeeker    JobSeeker      @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  notifications AlertNotification[]
+
+  @@map("job_alerts")
+}
+
+model AlertNotification {
+  id        String   @id @default(cuid())
+  alertId   String
+  jobId     String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  alert JobAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  job   Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([alertId, jobId])
+  @@map("alert_notifications")
+}
